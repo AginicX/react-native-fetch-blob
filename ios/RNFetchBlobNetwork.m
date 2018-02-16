@@ -458,8 +458,8 @@ NSOperationQueue *taskQueue;
          sendDeviceEventWithName:EVENT_PROGRESS
          body:@{
                 @"taskId": taskId,
-                @"written": [NSString stringWithFormat:@"%d", receivedBytes],
-                @"total": [NSString stringWithFormat:@"%d", expectedBytes],
+                @"written": [NSString stringWithFormat:@"%llu", receivedBytes],
+                @"total": [NSString stringWithFormat:@"%llu", expectedBytes],
                 @"chunk": chunkString
             }
          ];

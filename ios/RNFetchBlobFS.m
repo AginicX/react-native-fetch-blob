@@ -513,7 +513,7 @@ NSMutableDictionary *fileStreams = nil;
         return nil;
     }
     NSDictionary * info = [fm attributesOfItemAtPath:path error:&error];
-    NSString * size = [NSString stringWithFormat:@"%d", [info fileSize]];
+    NSString * size = [NSString stringWithFormat:@"%llu", [info fileSize]];
     NSString * filename = [path lastPathComponent];
     NSDate * lastModified;
     [[NSURL fileURLWithPath:path] getResourceValue:&lastModified forKey:NSURLContentModificationDateKey error:&error];
