@@ -2,6 +2,9 @@
 // Use of this source code is governed by a MIT-style license that can be
 // found in the LICENSE file.
 
+// Copyright 2016 wkh237@github. All rights reserved.
+// Use of this source code is governed by a MIT-style license that can be
+// found in the LICENSE file.
 import {
   NativeModules,
   DeviceEventEmitter,
@@ -48,29 +51,27 @@ const RNFetchBlob = NativeModules.RNFetchBlob
 
 // when app resumes, check if there's any expired network task and trigger
 // their .expire event
-if(Platform.OS === 'ios') {
+if (Platform.OS === 'ios') {
   AppState.addEventListener('change', (e) => {
-    if(e === 'active')
-      RNFetchBlob.emitExpiredEvent(()=>{})
+    if (e === 'active')
+      RNFetchBlob.emitExpiredEvent(() => {})
   })
 }
 
 // register message channel event handler.
 emitter.addListener("RNFetchBlobMessage", (e) => {
 
-  if(e.event === 'warn') {
+  if (e.event === 'warn') {
     console.warn(e.detail)
-  }
-  else if (e.event === 'error') {
+  } else if (e.event === 'error') {
     throw e.detail
-  }
-  else {
+  } else {
     console.log("RNFetchBlob native message", e.detail)
   }
 })
 
 // Show warning if native module not detected
-if(!RNFetchBlob || !RNFetchBlob.fetchBlobForm || !RNFetchBlob.fetchBlob) {
+if (!RNFetchBlob || !RNFetchBlob.fetchBlobForm || !RNFetchBlob.fetchBlob) {
   console.warn(
     'react-native-fetch-blob could not find valid native module.',
     'please make sure you have linked native modules using `rnpm link`,',
@@ -78,7 +79,7 @@ if(!RNFetchBlob || !RNFetchBlob.fetchBlobForm || !RNFetchBlob.fetchBlob) {
   )
 }
 
-function wrap(path:string):string {
+function wrap(path: string): string {
   return 'RNFetchBlob-file://' + path
 }
 
@@ -108,8 +109,10 @@ function wrap(path:string):string {
  *
  * @return {function} This method returns a `fetch` method instance.
  */
-function config (options:RNFetchBlobConfig) {
-  return { fetch : fetch.bind(options) }
+function config(options: RNFetchBlobConfig) {
+  return {
+    fetch: fetch.bind(options)
+  }
 }
 
 /**
@@ -121,9 +124,9 @@ function config (options:RNFetchBlobConfig) {
  * @param  {any} body       Data to put or post to file systen.
  * @return {Promise}
  */
-function fetchFile(options = {}, method, url, headers = {}, body):Promise {
+function fetchFile(options = {}, method, url, headers = {}, body): Promise {
 
-  if(!URIUtil.isFileURI(url)) {
+  if (!URIUtil.isFileURI(url)) {
     throw `could not fetch file from an invalid URI : ${url}`
   }
 
@@ -136,47 +139,51 @@ function fetchFile(options = {}, method, url, headers = {}, body):Promise {
   let info = null
   let _progress, _uploadProgress, _stateChange
 
-  switch(method.toLowerCase()) {
+  switch (method.toLowerCase()) {
 
     case 'post':
-    break
+      break
 
     case 'put':
-    break
+      break
 
-    // read data from file system
+      // read data from file system
     default:
       promise = fs.stat(url)
-      .then((stat) => {
-        total = stat.size
-        return fs.readStream(url,
-          headers.encoding || 'utf8',
-          Math.floor(headers.bufferSize) || 409600,
-          Math.floor(headers.interval) || 100
-        )
-      })
-      .then((stream) => new Promise((resolve, reject) => {
-        stream.open()
-        info = {
-          state : "2",
-          headers : { 'source' : 'system-fs' },
-          status : 200,
-          respType : 'text',
-          rnfbEncode : headers.encoding || 'utf8'
-        }
-        _stateChange(info)
-        stream.onData((chunk) => {
-          _progress && _progress(cursor, total, chunk)
-          if(headers.noCache)
-            return
-          cacheData += chunk
+        .then((stat) => {
+          total = stat.size
+          return fs.readStream(url,
+            headers.encoding || 'utf8',
+            Math.floor(headers.bufferSize) || 409600,
+            Math.floor(headers.interval) || 100
+          )
         })
-        stream.onError((err) => { reject(err) })
-        stream.onEnd(() => {
-          resolve(new FetchBlobResponse(null, info, cacheData))
-        })
-      }))
-    break
+        .then((stream) => new Promise((resolve, reject) => {
+          stream.open()
+          info = {
+            state: "2",
+            headers: {
+              'source': 'system-fs'
+            },
+            status: 200,
+            respType: 'text',
+            rnfbEncode: headers.encoding || 'utf8'
+          }
+          _stateChange(info)
+          stream.onData((chunk) => {
+            _progress && _progress(cursor, total, chunk)
+            if (headers.noCache)
+              return
+            cacheData += chunk
+          })
+          stream.onError((err) => {
+            reject(err)
+          })
+          stream.onEnd(() => {
+            resolve(new FetchBlobResponse(null, info, cacheData))
+          })
+        }))
+      break
   }
 
   promise.progress = (fn) => {
@@ -207,7 +214,7 @@ function fetchFile(options = {}, method, url, headers = {}, body):Promise {
  *         This promise instance also contains a Customized method `progress`for
  *         register progress event handler.
  */
-function fetch(...args:any):Promise {
+function fetch(...args: any): Promise {
 
   // create task ID for receiving progress event
   let taskId = getUUID()
@@ -224,7 +231,7 @@ function fetch(...args:any):Promise {
   }, {});
 
   // fetch from file system
-  if(URIUtil.isFileURI(url)) {
+  if (URIUtil.isFileURI(url)) {
     return fetchFile(options, method, url, headers, body)
   }
 
@@ -234,38 +241,38 @@ function fetch(...args:any):Promise {
 
     // on progress event listener
     subscription = emitter.addListener('RNFetchBlobProgress', (e) => {
-      if(e.taskId === taskId && promise.onProgress) {
+      if (e.taskId === taskId && promise.onProgress) {
         promise.onProgress(e.written, e.total, e.chunk)
       }
     })
 
     subscriptionUpload = emitter.addListener('RNFetchBlobProgress-upload', (e) => {
-      if(e.taskId === taskId && promise.onUploadProgress) {
+      if (e.taskId === taskId && promise.onUploadProgress) {
         promise.onUploadProgress(e.written, e.total)
       }
     })
 
     stateEvent = emitter.addListener('RNFetchBlobState', (e) => {
-      if(e.taskId === taskId)
+      if (e.taskId === taskId)
         respInfo = e
       promise.onStateChange && promise.onStateChange(e)
     })
 
     subscription = emitter.addListener('RNFetchBlobExpire', (e) => {
-      if(e.taskId === taskId && promise.onExpire) {
+      if (e.taskId === taskId && promise.onExpire) {
         promise.onExpire(e)
       }
     })
 
     partEvent = emitter.addListener('RNFetchBlobServerPush', (e) => {
-      if(e.taskId === taskId && promise.onPartData) {
+      if (e.taskId === taskId && promise.onPartData) {
         promise.onPartData(e.chunk)
       }
     })
 
     // When the request body comes from Blob polyfill, we should use special its ref
     // as the request body
-    if( body instanceof Blob && body.isRNFetchBlobPolyfill) {
+    if (body instanceof Blob && body.isRNFetchBlobPolyfill) {
       body = body.getRNFetchBlobRef()
     }
 
@@ -297,13 +304,13 @@ function fetch(...args:any):Promise {
       // delete promise['expire']
       promise.cancel = () => {}
 
-      if(err)
+      if (err)
         reject(new Error(err, respInfo))
       else {
         // response data is saved to storage, create a session for it
-        if(options.path || options.fileCache || options.addAndroidDownloads
-          || options.key || options.auto && respInfo.respType === 'blob') {
-          if(options.session)
+        if (options.path || options.fileCache || options.addAndroidDownloads ||
+          options.key || options.auto && respInfo.respType === 'blob') {
+          if (options.session)
             session(options.session).add(data)
         }
         respInfo.rnfbEncode = rawType
@@ -324,12 +331,11 @@ function fetch(...args:any):Promise {
     let interval = 250
     let count = -1
     let fn = () => {}
-    if(args.length === 2) {
+    if (args.length === 2) {
       interval = args[0].interval || interval
       count = args[0].count || count
       fn = args[1]
-    }
-    else {
+    } else {
       fn = args[0]
     }
     promise.onProgress = fn
@@ -340,12 +346,11 @@ function fetch(...args:any):Promise {
     let interval = 250
     let count = -1
     let fn = () => {}
-    if(args.length === 2) {
+    if (args.length === 2) {
       interval = args[0].interval || interval
       count = args[0].count || count
       fn = args[1]
-    }
-    else {
+    } else {
       fn = args[0]
     }
     promise.onUploadProgress = fn
@@ -365,7 +370,7 @@ function fetch(...args:any):Promise {
     return promise
   }
   promise.cancel = (fn) => {
-    fn = fn || function(){}
+    fn = fn || function() {}
     subscription.remove()
     subscriptionUpload.remove()
     stateEvent.remove()
@@ -382,45 +387,45 @@ function fetch(...args:any):Promise {
  */
 class FetchBlobResponse {
 
-  taskId : string;
-  path : () => string | null;
-  type : 'base64' | 'path' | 'utf8';
-  data : any;
-  blob : (contentType:string, sliceSize:number) => Promise<Blob>;
-  text : () => string | Promise<any>;
-  json : () => any;
-  base64 : () => any;
-  flush : () => void;
-  respInfo : RNFetchBlobResponseInfo;
-  session : (name:string) => RNFetchBlobSession | null;
-  readFile : (encode: 'base64' | 'utf8' | 'ascii') => ?Promise<any>;
-  readStream : (
+  taskId: string;
+  path: () => string | null;
+  type: 'base64' | 'path' | 'utf8';
+  data: any;
+  blob: (contentType: string, sliceSize: number) => Promise < Blob > ;
+  text: () => string | Promise < any > ;
+  json: () => any;
+  base64: () => any;
+  flush: () => void;
+  respInfo: RNFetchBlobResponseInfo;
+  session: (name: string) => RNFetchBlobSession | null;
+  readFile: (encode: 'base64' | 'utf8' | 'ascii') => ? Promise < any > ;
+  readStream: (
     encode: 'utf8' | 'ascii' | 'base64',
   ) => RNFetchBlobStream | null;
 
-  constructor(taskId:string, info:RNFetchBlobResponseInfo, data:any) {
+  constructor(taskId: string, info: RNFetchBlobResponseInfo, data: any) {
     this.data = data
     this.taskId = taskId
     this.type = info.rnfbEncode
     this.respInfo = info
 
-    this.info = ():RNFetchBlobResponseInfo => {
+    this.info = (): RNFetchBlobResponseInfo => {
       return this.respInfo
     }
 
-    this.array = ():Promise<Array> => {
+    this.array = (): Promise < Array > => {
       let cType = info.headers['Content-Type'] || info.headers['content-type']
       return new Promise((resolve, reject) => {
-        switch(this.type) {
+        switch (this.type) {
           case 'base64':
             // TODO : base64 to array buffer
-          break
+            break
           case 'path':
             fs.readFile(this.data, 'ascii').then(resolve)
-          break
+            break
           default:
             // TODO : text to array buffer
-          break
+            break
         }
       })
     }
@@ -429,20 +434,26 @@ class FetchBlobResponse {
      * Convert result to javascript RNFetchBlob object.
      * @return {Promise<Blob>} Return a promise resolves Blob object.
      */
-    this.blob = ():Promise<Blob> => {
+    this.blob = (): Promise < Blob > => {
       let Blob = polyfill.Blob
       let cType = info.headers['Content-Type'] || info.headers['content-type']
       return new Promise((resolve, reject) => {
-        switch(this.type) {
+        switch (this.type) {
           case 'base64':
-            Blob.build(this.data, { type : cType + ';BASE64' }).then(resolve)
-          break
+            Blob.build(this.data, {
+              type: cType + ';BASE64'
+            }).then(resolve)
+            break
           case 'path':
-            polyfill.Blob.build(wrap(this.data), { type : cType }).then(resolve)
-          break
+            polyfill.Blob.build(wrap(this.data), {
+              type: cType
+            }).then(resolve)
+            break
           default:
-            polyfill.Blob.build(this.data, { type : 'text/plain' }).then(resolve)
-          break
+            polyfill.Blob.build(this.data, {
+              type: 'text/plain'
+            }).then(resolve)
+            break
         }
       })
     }
@@ -450,9 +461,9 @@ class FetchBlobResponse {
      * Convert result to text.
      * @return {string} Decoded base64 string.
      */
-    this.text = ():string | Promise<any> => {
+    this.text = (): string | Promise < any > => {
       let res = this.data
-      switch(this.type) {
+      switch (this.type) {
         case 'base64':
           return base64.decode(this.data)
         case 'path':
@@ -465,13 +476,13 @@ class FetchBlobResponse {
      * Convert result to JSON object.
      * @return {object} Parsed javascript object.
      */
-    this.json = ():any => {
-      switch(this.type) {
+    this.json = (): any => {
+      switch (this.type) {
         case 'base64':
           return JSON.parse(base64.decode(this.data))
         case 'path':
           return fs.readFile(this.data, 'utf8')
-                   .then((text) => Promise.resolve(JSON.parse(text)))
+            .then((text) => Promise.resolve(JSON.parse(text)))
         default:
           return JSON.parse(this.data)
       }
@@ -480,8 +491,8 @@ class FetchBlobResponse {
      * Return BASE64 string directly.
      * @return {string} BASE64 string of response body.
      */
-    this.base64 = ():string | Promise<any> => {
-      switch(this.type) {
+    this.base64 = (): string | Promise < any > => {
+      switch (this.type) {
         case 'base64':
           return this.data
         case 'path':
@@ -496,7 +507,7 @@ class FetchBlobResponse {
      */
     this.flush = () => {
       let path = this.path()
-      if(!path || this.type !== 'path')
+      if (!path || this.type !== 'path')
         return
       return unlink(path)
     }
@@ -505,13 +516,13 @@ class FetchBlobResponse {
      * @return {string} File path of temp file.
      */
     this.path = () => {
-      if(this.type === 'path')
+      if (this.type === 'path')
         return this.data
       return null
     }
 
-    this.session = (name:string):RNFetchBlobSession | null => {
-      if(this.type === 'path')
+    this.session = (name: string): RNFetchBlobSession | null => {
+      if (this.type === 'path')
         return session(name).add(this.data)
       else {
         console.warn('only file paths can be add into session.')
@@ -524,11 +535,10 @@ class FetchBlobResponse {
      * @param  {Function} fn On data event handler
      * @return {void}
      */
-    this.readStream = (encode: 'base64' | 'utf8' | 'ascii'):RNFetchBlobStream | null => {
-      if(this.type === 'path') {
+    this.readStream = (encode: 'base64' | 'utf8' | 'ascii'): RNFetchBlobStream | null => {
+      if (this.type === 'path') {
         return readStream(this.data, encode)
-      }
-      else {
+      } else {
         console.warn('RNFetchblob', 'this response data does not contains any available stream')
         return null
       }
@@ -540,11 +550,10 @@ class FetchBlobResponse {
      * @return {String}
      */
     this.readFile = (encode: 'base64' | 'utf8' | 'ascii') => {
-      if(this.type === 'path') {
+      if (this.type === 'path') {
         encode = encode || 'utf8'
         return readFile(this.data, encode)
-      }
-      else {
+      } else {
         console.warn('RNFetchblob', 'this response does not contains a readable file')
         return null
       }
