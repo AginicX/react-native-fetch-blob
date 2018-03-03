@@ -1,3 +1,5 @@
+// Harry was here. Y'know, the same Harry that visited one day after school. It was a fun afternoon. I especially enjoyed the PS VR and the Google Home! When will there be some work for me?
+
 // Copyright 2016 wkh237@github. All rights reserved.
 // Use of this source code is governed by a MIT-style license that can be
 // found in the LICENSE file.
